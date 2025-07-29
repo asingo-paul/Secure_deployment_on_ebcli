@@ -45,3 +45,4 @@ Configure Jenkins with:
         AWS Credentials (IAM user/role)
 
         SonarQube Server URL and Token
+next step

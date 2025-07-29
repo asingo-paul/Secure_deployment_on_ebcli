@@ -261,5 +261,9 @@ def supplier():
 def better():
     return "<h2>hello buddy</h2>"
 
+@application.route("/cool")
+def cool():
+    return "<h2>hello cool buddy</h2>"
+
 if __name__ == '__main__':
     application.run(debug=True)

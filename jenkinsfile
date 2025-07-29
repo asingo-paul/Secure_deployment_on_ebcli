@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_DEFAULT_REGION = 'us-east-1'     // change if needed
+        EB_APP_NAME = 'flask-ecommerce'      // your Elastic Beanstalk app name
+        EB_ENV_NAME = 'flask-ecommerce-env'  // your EB environment
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/<your-username>/<your-repo>.git'
+            }
+        }
+        stage('Security Scan - Bandit') {
+            steps {
+                sh 'pip install --quiet bandit safety'
+                sh 'bandit -r .'
+            }
+        }
+        stage('Dependency Security Check - Safety') {
+            steps {
+                sh 'safety check -r requirements.txt --full-report || true'
+            }
+        }
+        stage('Deploy to AWS Elastic Beanstalk') {
+            steps {
+                sh '''
+                pip install --quiet awsebcli
+                eb init ${EB_APP_NAME} --region ${AWS_DEFAULT_REGION} --platform "Python 3.11"
+                eb deploy ${EB_ENV_NAME}
+                '''
+            }
+        }
+    }
+}

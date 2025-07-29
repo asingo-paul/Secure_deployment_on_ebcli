@@ -26,3 +26,22 @@ SonarQube
 
 <img width="1536" height="1024" alt="architecture design" src="https://github.com/user-attachments/assets/0af5ffdf-ca15-47fe-b30e-26bc55a31b2f" />
 
+### Jenkins Setup
+
+Install Jenkins (on an EC2 instance or local machine)
+
+Install required plugins:
+
+        GitHub
+
+        Pipeline
+
+        SonarQube Scanner
+
+        AWS Elastic Beanstalk Deployment Plugin (or AWS CLI)
+
+Configure Jenkins with:
+
+        AWS Credentials (IAM user/role)
+
+        SonarQube Server URL and Token

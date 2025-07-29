@@ -1,1 +1,3 @@
 .venv/
+.env
+security_check.py

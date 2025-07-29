@@ -8,53 +8,49 @@ from datetime import timedelta
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
 
-
-app = Flask(__name__)
-
-app.secret_key = os.environ.get('FLASK_SECRET_KEY')
+application = Flask(__name__)
+application.secret_key = os.environ.get('FLASK_SECRET_KEY')
 
 # MySQL configuration
-app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST')
-app.config['MYSQL_PORT'] = int(os.environ.get('MYSQL_PORT', 3306))
-app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER')
-app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB')
+application.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST')
+application.config['MYSQL_PORT'] = int(os.environ.get('MYSQL_PORT', 3306))
+application.config['MYSQL_USER'] = os.environ.get('MYSQL_USER')
+application.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
+application.config['MYSQL_DB'] = os.environ.get('MYSQL_DB')
 
 # Email configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')    # Use an app-specific password
+# application.config['MAIL_SERVER'] = 'smtp.gmail.com'
+# application.config['MAIL_PORT'] = 587
+# application.config['MAIL_USE_TLS'] = True
+# application.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+# application.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')  # App-specific password
 
-mail = Mail(app)
-# Session duration config
-app.permanent_session_lifetime = timedelta(days=7)
+mail = Mail(application)
+application.permanent_session_lifetime = timedelta(days=7)
 
-mysql = MySQL(app)
+mysql = MySQL(application)
 
 UPLOAD_FOLDER = 'static/uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+application.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+if not os.path.exists(application.config['UPLOAD_FOLDER']):
+    os.makedirs(application.config['UPLOAD_FOLDER'])
 
-@app.before_request
+@application.before_request
 def make_session_permanent():
     session.permanent = True
 
-# 🔴 Context processor to inject cart_count into all templates
-@app.context_processor
+# Context processor to inject cart_count into all templates
+@application.context_processor
 def inject_cart_count():
     cart = session.get('cart', {})
     cart_count = sum(item['quantity'] for item in cart.values())
     return dict(cart_count=cart_count)
 
-@app.route('/')
+@application.route('/')
 def home():
     return render_template('index.html')
 
-
-@app.route('/login', methods=['GET', 'POST'])
+@application.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
@@ -77,7 +73,7 @@ def login():
             return redirect(url_for('login'))
     return render_template('index.html')
 
-@app.route('/register', methods=['GET', 'POST'])
+@application.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         first_name = request.form['first_name']
@@ -110,8 +106,7 @@ def register():
         return redirect(url_for('home'))
     return render_template('register.html')
 
-
-@app.route('/forgot-password', methods=['GET', 'POST'])
+@application.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
         email = request.form['email']
@@ -119,8 +114,7 @@ def forgot_password():
         return redirect(url_for('login'))
     return render_template('forgot_password.html')
 
-
-@app.route('/profile')
+@application.route('/profile')
 def profile():
     user = session.get('user')
     if not user:
@@ -128,13 +122,13 @@ def profile():
         return redirect(url_for('login'))
     return render_template('profile.html', user=user)
 
-@app.route('/logout')
+@application.route('/logout')
 def logout():
     session.pop('user', None)
     flash('You have been logged out.', 'info')
     return redirect(url_for('home'))
 
-@app.route('/update-cart/<int:product_id>/<action>')
+@application.route('/update-cart/<int:product_id>/<action>')
 def update_cart(product_id, action):
     cart = session.get('cart', {})
     product_id_str = str(product_id)
@@ -151,7 +145,7 @@ def update_cart(product_id, action):
     session.modified = True
     return redirect(url_for('cart'))
 
-@app.route('/add-to-cart/<int:product_id>')
+@application.route('/add-to-cart/<int:product_id>')
 def add_to_cart(product_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("SELECT * FROM products WHERE id = %s", (product_id,))
@@ -179,20 +173,20 @@ def add_to_cart(product_id):
     flash("Added to cart!", "success")
     return redirect(url_for('products'))
 
-@app.route('/cart')
+@application.route('/cart')
 def cart():
     cart = session.get('cart', {})
     total = sum(item['price'] * item['quantity'] for item in cart.values())
     return render_template('cart.html', cart=cart, total=total)
 
-@app.route('/products')
+@application.route('/products')
 def products():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("SELECT * FROM products")
     items = cursor.fetchall()
     return render_template('products.html', items=items)
 
-@app.route('/order-now')
+@application.route('/order-now')
 def order_now():
     if 'cart' not in session:
         flash("Your cart is empty.", "warning")
@@ -223,36 +217,30 @@ def order_now():
     session.pop('cart', None)
     return redirect(url_for('products'))
 
-
-@app.route('/buy/<int:product_id>')
+@application.route('/buy/<int:product_id>')
 def buy_now(product_id):
     # logic for checkout or immediate purchase
     return f'Buy Now for product {product_id}'
 
-
-@app.route('/search')
+@application.route('/search')
 def search_products():
     query = request.args.get('q', '').lower()
-
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cur.execute("SELECT * FROM products WHERE LOWER(name) LIKE %s OR LOWER(description) LIKE %s", 
                 (f"%{query}%", f"%{query}%"))
     filtered_products = cur.fetchall()
-
     return render_template('products.html', items=filtered_products, cart_count=session.get('cart_count', 0))
 
-@app.route('/contact', methods=['GET', 'POST'])
+@application.route('/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
         message = request.form['message']
 
-        # Compose email
         msg = Message(f"New Message from {name}",
                       sender=email,
                       recipients=['asingopaul66@gmail.com'])  # Replace with your receiving email
-
         msg.body = f"From: {name} <{email}>\n\nMessage:\n{message}"
 
         try:
@@ -263,21 +251,15 @@ def contact():
             flash('There was an error sending your message.', 'danger')
 
         return redirect(url_for('contact'))
-
     return render_template('contact.html')
 
-@app.route('/supplier')
+@application.route('/supplier')
 def supplier():
-
     return render_template('suppliers.html')
 
-
-
-@app.route("/better")
+@application.route("/better")
 def better():
-
     return "<h2>hello buddy</h2>"
 
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    application.run(debug=True)

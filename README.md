@@ -14,3 +14,15 @@ Installed Tools:
         Git
 
 Your e-commerce application code (Flask/Django, Node.js, Laravel, etc.).
+
+Bandit and Safety for security analysis
+
+Jenkins
+
+SonarQube
+
+
+### ARCHITECTURAL DESIGN
+
+<img width="1536" height="1024" alt="architecture design" src="https://github.com/user-attachments/assets/0af5ffdf-ca15-47fe-b30e-26bc55a31b2f" />
+
